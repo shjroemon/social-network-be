@@ -30,7 +30,7 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: clientURL } });
 
 const corsOptions = {
-  origin: "https://social-network-03i4.onrender.com/",
+  origin: "https://deft-bubblegum-623f97.netlify.app",
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true, // Enable credentials (cookies, authorization headers, etc.)
 };
@@ -40,7 +40,7 @@ app.use(cors(corsOptions));
 app.options("/api/some-endpoint", (req, res) => {
   res.setHeader(
     "Access-Control-Allow-Origin",
-    "https://social-network-03i4.onrender.com/"
+    "https://deft-bubblegum-623f97.netlify.app"
   );
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
