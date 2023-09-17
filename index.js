@@ -27,25 +27,8 @@ const app = express();
 const server = http.createServer(app);
 
 // Socket.IO initialization
-const io = new Server(server, { cors: { origin: clientURL } });
-
-const corsOptions = {
-  origin: "https://deft-bubblegum-623f97.netlify.app",
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  credentials: true, // Enable credentials (cookies, authorization headers, etc.)
-};
-
-app.use(cors(corsOptions));
-
-app.options("/api/some-endpoint", (req, res) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "https://deft-bubblegum-623f97.netlify.app"
-  );
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.status(200).end();
+const io = new Server(server, {
+  cors: { origin: "https://deft-bubblegum-623f97.netlify.app" },
 });
 
 const PORT = process.env.PORT || 5000;
@@ -60,7 +43,15 @@ app.use(xss());
 app.use(helmet());
 app.use(express.json());
 app.use(fileUpload({ useTempFiles: true }));
-app.use(cors({ origin: clientURL }));
+
+// Middleware to handle CORS
+app.use(
+  cors({
+    origin: "https://deft-bubblegum-623f97.netlify.app",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+  })
+);
 
 app.get("/", (req, res) => {
   res.status(200).json({ message: "welcome" });
