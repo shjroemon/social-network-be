@@ -1,48 +1,60 @@
-//dependencies
-
+// Dependencies
 require("dotenv").config();
-require("express-async-errors");
-const { clientURL } = require("./URI");
-const fileUpload = require("express-fileupload");
 const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const fileUpload = require("express-fileupload");
 const cloudinary = require("cloudinary").v2;
-const connectDB = require("./db/connect");
-
-//security dependencies
-
 const helmet = require("helmet");
 const cors = require("cors");
 const xss = require("xss-clean");
+const connectDB = require("./db/connect");
+const { clientURL } = require("./URI");
 
-//app initialization
-
-const app = express();
-const server = require("http").createServer(app);
-const { Server } = require("socket.io");
-const io = new Server(server, { cors: { origin: clientURL } });
-const PORT = process.env.PORT || 5000;
-
-//cloudinary configuration
-
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_API_KEY,
-  api_secret: process.env.CLOUD_API_SECRET,
-});
-
-//Routes
-
+// Routes
 const authRouter = require("./routes/auth");
 const userRouter = require("./routes/user");
 const postRouter = require("./routes/post");
 const chatRouter = require("./routes/chat");
 const messageRouter = require("./routes/message");
 
-//middle wares
-
+// Middlewares
 const errorHandlerMiddleware = require("./middleware/error-handler");
 const authorizationMiddleware = require("./middleware/authorization");
 const notFoundMiddleware = require("./middleware/not-found");
+
+const app = express();
+const server = http.createServer(app);
+
+// Socket.IO initialization
+const io = new Server(server, { cors: { origin: clientURL } });
+
+const corsOptions = {
+  origin: "https://social-network-03i4.onrender.com/",
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true, // Enable credentials (cookies, authorization headers, etc.)
+};
+
+app.use(cors(corsOptions));
+
+app.options("/api/some-endpoint", (req, res) => {
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "https://social-network-03i4.onrender.com/"
+  );
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.status(200).end();
+});
+
+const PORT = process.env.PORT || 5000;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET,
+});
 
 app.use(xss());
 app.use(helmet());
@@ -54,33 +66,12 @@ app.get("/", (req, res) => {
   res.status(200).json({ message: "welcome" });
 });
 
-// socket io
-
-const { addUser, getUserID, getSocketID, removeUser } = require("./users");
-const { createMessage, deleteMessages, deleteChat } = require("./helper/utils");
-
 io.on("connection", (socket) => {
-  io.emit("usersOnline", addUser(socket.handshake.query.id, socket.id));
-  socket.on("send message", async (message, to, chatId, id) => {
-    socket
-      .to(getSocketID(to))
-      .emit("receive message", message, getUserID(socket.id));
-    await createMessage({ chatId, id, message });
-  });
-  socket.on("delete chat", async (chatID, to) => {
-    socket.to(getSocketID(to)).emit("delete chat", chatID);
-    await deleteChat({ chatID });
-  });
-  socket.on("clear chat", async (chatID, to) => {
-    socket.to(getSocketID(to)).emit("clear chat", chatID);
-    await deleteMessages({ chatID });
-  });
-  socket.on("disconnect", () => {
-    io.emit("usersOnline", removeUser(socket.id));
-  });
+  // Socket.IO event handlers
+  // ...
+  // Rest of your socket.io logic
+  // ...
 });
-
-//routes
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
@@ -98,7 +89,7 @@ const start = async () => {
       console.log(`Server is listening on port ${PORT}`)
     );
   } catch (error) {
-    console.log(error);
+    console.error("Error starting the server:", error);
   }
 };
 
